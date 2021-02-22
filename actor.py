@@ -14,7 +14,6 @@ import pygame
 from typing import Tuple, Optional
 from settings import *
 
-
 class Actor:
     """
     A class that represents all the actors in the game. This class includes any
@@ -93,19 +92,73 @@ class Actor:
           objects as long as the move is not blocked by something.
         """
         # TODO Task 2: Complete this method
-        self.x += dx
-        if self.x <= 0:
-            self.x = 0
-        if self.x >= 25:
-            self.x = 25
+        rside = game_.get_actor(self.x+1, self.y)
+        lside = game_.get_actor(self.x-1, self.y)
+        up = game_.get_actor(self.x, self.y-1)
+        down = game_.get_actor(self.x, self.y+1)
+        # new_actor = game_.get_actor(self.x +dx, self.y + dy)
+        if rside:
+            if rside.is_push() and not rside.is_stop():
+                if dx > 0:
+                    # rside = game_.get_actor(self.x+1, self.y)
+                    rside.move(game_, dx, dy)
+
+                    rside_bush = game_.get_actor(self.x +dx, self.y)
+                    if rside_bush and rside_bush.is_stop:
+                        return False
+            else:
+                if dx > 0:
+                    return False
+
+        if lside:
+            if lside.is_push() and not lside.is_stop():
+                if dx < 0:
+                    # lside = game_.get_actor(self.x -1, self.y)
+                    lside.move(game_, dx, dy)
+
+                    lside_bush = game_.get_actor(self.x +dx, self.y)
+                    if lside_bush and lside_bush.is_stop:
+                        return False
+            else:
+                if dx < 0:
+                    return False
+        if up:
+            if up.is_push() and not up.is_stop():
+                if dy < 0:
+                    # up = game_.get_actor(self.x, self.y-1)
+                    up.move(game_, dx, dy)
+
+                    up_bush = game_.get_actor(self.x, self.y + dy)
+                    if up_bush and up_bush.is_stop:
+                        return False
+            else:
+                if dy < 0:
+                    return False
+        if down:
+            if down.is_push() and not down.is_stop():
+                if dy > 0:
+                    # down = game_.get_actor(self.x, self.y+1)
+                    down.move(game_, dx, dy)
+
+                    down_bush = game_.get_actor(self.x, self.y + dy)
+                    if down_bush and down_bush.is_stop:
+                        return False
+            else:
+                if dy > 0:
+                    return False
 
         self.y += dy
+        self.x += dx
+        x1 = game_.x_tiles
+        y1 = game_.y_tiles
+        if self.x <= 0:
+            self.x = 0
+        elif self.x >= x1:
+            self.x = x1
         if self.y <= 0:
             self.y = 0
-
-        if self.y >= 18:
-            self.y = 18
-
+        elif self.y >= y1:
+            self.y = y1
         return True
 
 
@@ -336,44 +389,38 @@ class Meepo(Character):
         # available for use.
         # Watch the video demo carefully too see how Meepo moves. Note the
         # movement of her "arms" and "tail".
-
         key_pressed = game_.keys_pressed
         dx, dy = 0, 0
+
         if key_pressed[pygame.K_LEFT]:
             if self.image == self.walk_left[0]:
                 self.image = self.walk_left[1]
-            elif self.image != self.walk_left[1]:
-                self.image = self.walk_left[0]
-            elif self.image == self.walk_left[1]:
+            else:
                 self.image = self.walk_left[0]
             dx -= 1
 
         elif key_pressed[pygame.K_RIGHT]:
-            if self.image == self.walk_right[1]:
+            if self.image == self.walk_right[0]:
+                self.image = self.walk_right[1]
+            else:
                 self.image = self.walk_right[0]
-            elif self.image != self.walk_right[0]:
-                self.image = self.walk_right[1]
-            elif self.image == self.walk_right[0]:
-                self.image = self.walk_right[1]
             dx += 1
-
+        
         elif key_pressed[pygame.K_UP]:
             if self.image == self.walk_up[0]:
                 self.image = self.walk_up[1]
-            elif self.image != self.walk_up[1]:
-                self.image = self.walk_up[0]
-            elif self.image == self.walk_up[1]:
+            else:
                 self.image = self.walk_up[0]
             dy -= 1
+        
         elif key_pressed[pygame.K_DOWN]:
-            if self.image == self.walk_down[1]:
+            if self.image == self.walk_down[0]:
+                self.image = self.walk_down[1]
+            else:
                 self.image = self.walk_down[0]
-            elif self.image != self.walk_down[0]:
-                self.image = self.walk_down[1]
-            elif self.image == self.walk_down[0]:
-                self.image = self.walk_down[1]
             dy += 1
-        return (dx, dy)
+        
+        return (dx,dy)
 
 
 # TODO Task 1: add the Wall, Rock, and Flag classes
@@ -383,32 +430,32 @@ class Meepo(Character):
 #
 # Hint: use the load_image() function to load the image of the character
 #
-class Wall(Actor):
+class Wall(Character):
 
     def __init__(self, x: int, y: int) -> None:
 
         super().__init__(x, y)
         self.image = load_image(WALL_SPRITE)
 
-        # Bush is always unmovable and cannot be moved through
-        self._is_stop = True
+        # Wall can be pushed
+        self._is_stop = False
         self._is_push = True
 
     def copy(self) -> 'Wall':
         """
-        Returns a copy of the Bush object
+        Returns a copy of the Wall object
         """
         return Wall(self.x, self.y)
 
-class Rock(Actor):
+class Rock(Character):
 
     def __init__(self, x: int, y: int) -> None:
 
         super().__init__(x, y)
         self.image = load_image(ROCK_SPRITE)
 
-        # Bush is always unmovable and cannot be moved through
-        self._is_stop = True
+        # Rock can be moved
+        self._is_stop = False
         self._is_push = True
 
     def copy(self) -> 'Rock':
@@ -417,14 +464,13 @@ class Rock(Actor):
         """
         return Rock(self.x, self.y)
 
-class Flag(Actor):
+class Flag(Character):
 
     def __init__(self, x: int, y: int) -> None:
 
         super().__init__(x, y)
         self.image = load_image(FLAG_SPRITE)
 
-        # Bush is always unmovable and cannot be moved through
         self._is_stop = True
         self._is_push = False
 
@@ -452,6 +498,7 @@ class Bush(Actor):
         """
         Returns a copy of the Bush object
         """
+
         return Bush(self.x, self.y)
 
 
@@ -474,7 +521,7 @@ class Block(Actor):
         self.word = word_
         # Blocks are always pushable and cannot be moved through.
         self._is_push = True
-        self._is_stop = True
+        self._is_stop = False
 
     def copy(self) -> 'Block':
         """
@@ -584,7 +631,22 @@ class Is(Block):
         """
         # TODO Task 3: Complete this method.
 
-        return "", ""
+        if up and down:
+            # print(up)
+            # print(down)
+            vertical = up.word + " is" + down.word
+        else:
+            vertical = ""
+
+        if left and right:
+            # print(left.word)
+            # print(right)
+            horizontal = left.word + " is" + right.word
+        else:
+            horizontal = ""
+
+        # print(vertical, horizontal)
+        return vertical, horizontal
 
 
 def load_image(img_name: str, width: int = TILESIZE,

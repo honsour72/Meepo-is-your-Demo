@@ -222,6 +222,24 @@ class Game:
         #   self.player correctly after you update the rules. Note that
         #   self.player could be None in some cases.
         # - Update self._rules to the new list of rules.
+        for is_ in self._is:
+            # is_.update(is_.y-1,is_.y+1, is_.x-1, is_.x+1)
+            # is_.update(is_.y-1,is_.y+1, is_.x-1, is_.x+1
+            # is_.update(is_.y, is_.y, is_.x, is_.x)
+            block_above_is = self.get_actor(is_.x, is_.y-1)
+            block_under_is = self.get_actor(is_.x, is_.y+1)
+            block_left_is  = self.get_actor(is_.x-1, is_.y)
+            block_right_is = self.get_actor(is_.x+1, is_.y)
+            vertical, horizontal = is_.update(block_above_is, block_under_is, block_left_is, block_right_is)
+
+            if vertical:
+                if vertical.split(" ")[0] in list(SUBJECTS.values()):
+                    # print(vertical.split(" ")[0])
+                    if vertical.split(" ")[1][2:] in list(ATTRIBUTES.values()):
+                        # print(vertical.split(" ")[1][2:])
+
+
+
 
         return
 
@@ -293,10 +311,12 @@ class Game:
 if __name__ == "__main__":
 
     game = Game()
+
     # load_map public function
     game.load_map(MAP_PATH)
     game.new()
     game.run()
+
 
     # import python_ta
     # python_ta.check_all(config={
