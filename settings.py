@@ -30,7 +30,7 @@ CHARACTERS = {"1": "Bush", "2": "Meepo", "3": "Wall", "4": "Rock", "5": "Flag"}
 
 BASE_DIR = "."
 SPRITES_DIR = "{}/sprites".format(BASE_DIR)
-MAP_PATH = "{}/maps/map.txt".format(BASE_DIR)
+MAP_PATH = "{}/maps/student_map6.txt".format(BASE_DIR)
 # MAP_PATH = "{}/map.txt".format(BASE_DIR)
 
 # Actors' sprites

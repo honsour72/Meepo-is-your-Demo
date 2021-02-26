@@ -473,7 +473,7 @@ class Rock(Character):
 
         # Bush is always unmovable and cannot be moved through
         # Rock can be moved
-        self._is_stop = True
+        self._is_stop = False
         self._is_push = False
 
     def copy(self) -> 'Rock':
@@ -489,7 +489,8 @@ class Flag(Character):
         super().__init__(x, y)
         self.image = load_image(FLAG_SPRITE)
 
-        self._is_stop = False
+        # Bush is always unmovable and cannot be moved through
+        self._is_stop = True
         self._is_push = False
 
     def copy(self) -> 'Flag':
@@ -650,64 +651,37 @@ class Is(Block):
         # TODO Task 3: Complete this method.
         vert = ''
         horiz = ''
-        # if left and right:
-        #     # print(right.word)
-        #     # print(list(ATTRIBUTES.values()))
-        #     # if left.word in list(SUBJECTS.values()) and right.word in \
-        #     #         list(ATTRIBUTES.values()):
-        #     self.image = load_image(IS_DARK_BLUE)
-        #     try:
-        #         horiz = left.word + ' is' + right.word
-        #     except AttributeError:
-        #         pass
-        #
-        # else:
-        #     self.image = load_image(IS_PURPLE)
-        #
-        #
-        # if up and down:
-        #     if up.word in list(SUBJECTS.values()) and down.word in \
-        #             list(ATTRIBUTES.values()):
-        #         self.image = load_image(IS_LIGHT_BLUE)
-        #     try:
-        #         vert = up.word + ' is'+ down.word
-        #     except AttributeError:
-        #         pass
-        # else:
-        #     self.image = load_image(IS_PURPLE)
+        if left and right:
+            print(right.word)
+            print(list(ATTRIBUTES.values()))
+            
+            if left.word in list(SUBJECTS.values()) and right.word in \
+                    list(ATTRIBUTES.values()):
+                self.image = load_image(IS_LIGHT_BLUE)
+
+
+            try:
+                horiz = left.word + ' is' + right.word
+            except AttributeError:
+                pass
+
+        else:
+
+            self.image = load_image(IS_PURPLE)
+
+        if up and down:
+            self.image = load_image(IS_LIGHT_BLUE)
+            try:
+                vert = up.word + ' is'+ down.word
+            except AttributeError:
+                pass
+        else:
+
+            self.image = load_image(IS_PURPLE)
         # if horiz:
         #     print(horiz)
         # if vert:
         #     print(vert)
-        flag = 0
-        if left and right and type(left) != Bush and type(right)!= Bush:
-            try:
-                if left.word in list(SUBJECTS.values()) and right.word in list(ATTRIBUTES.values()):
-                    flag = 1
-                    self.image = load_image(IS_LIGHT_BLUE)
-                    horiz = left.word + ' is' + right.word
-            except AttributeError:
-                self.image = load_image(IS_PURPLE)
-
-        else:
-            self.image = load_image(IS_PURPLE)
-
-        if up and down and type(up) != Bush and type(down) != Bush:
-            # print(type(up), up)
-            # print(Bush)
-            try:
-                if up.word in list(SUBJECTS.values()) and down.word in list(ATTRIBUTES.values()):
-                    if flag == 1:
-                        self.image = load_image(IS_DARK_BLUE)
-                    else:
-                        self.image = load_image(IS_LIGHT_BLUE)
-                    vert = up.word + ' is' + down.word
-            except AttributeError:
-                self.image = load_image(IS_PURPLE)
-
-        else:
-            if flag == 0:
-                self.image = load_image(IS_PURPLE)
         return horiz, vert
 
 

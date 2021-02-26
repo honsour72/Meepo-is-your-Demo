@@ -86,9 +86,10 @@ class Game:
             "{}/backgroundBig.png".format(SPRITES_DIR)).convert_alpha()
         for col, tiles in enumerate(self.map_data):
             for row, tile in enumerate(tiles):
-                if tile == "2":
-                    self.player = Game.get_character(CHARACTERS[tile])(row, col)
-                if tile.isnumeric() and tile != "2":
+                # if tile == "2":
+                #     self.player = Game.get_character(CHARACTERS[tile])(row, col)
+                # if tile.isnumeric() and tile != "2":
+                if tile.isnumeric():
                     self._actors.append(
                         Game.get_character(CHARACTERS[tile])(row, col))
                 elif tile in SUBJECTS:
@@ -159,6 +160,7 @@ class Game:
                     if self.player is not None:
                         assert isinstance(self.player, actor.Character)
                         save = self._copy()
+                        # print(save)
                         if self.player.player_move(self) and not self.win_or_lose():
                             self._history.push(save)
         return
@@ -189,6 +191,7 @@ class Game:
             self._events()
             self._update()
             self._draw()
+
 
     def set_player(self, actor_: Optional[actor.Actor]) -> None:
         """
@@ -223,7 +226,206 @@ class Game:
         #   self.player could be None in some cases.
         # - Update self._rules to the new list of rules.
 
-        return
+        self._rules = self.get_rules()
+        actual_if_rules = []
+
+        for is_ in self._is:
+            block_above_is = self.get_actor(is_.x, is_.y - 1)
+            block_under_is = self.get_actor(is_.x, is_.y + 1)
+            block_left_is = self.get_actor(is_.x - 1, is_.y)
+            block_right_is = self.get_actor(is_.x + 1, is_.y)
+
+            horiz, vertical = is_.update(block_above_is, block_under_is, block_left_is, block_right_is)
+
+            if horiz:
+                # flag = 0
+                #     self._rules.append(horiz)
+                #     left_subj = horiz.split()[0]
+                #     right_att = horiz.split()[1]
+                #
+                #     subject = self.get_character(left_subj)
+                #     all_our_subjects = [i for i in self._actors if type(i) == subject]
+                #
+                #     if right_att == 'isPush':
+                #         if len(all_our_subjects) == 1: all_our_subjects[0]._is_push = True
+                #         else:
+                #             for i in all_our_subjects:
+                #                 i._is_push = True
+                #
+                #     if right_att == 'isStop':
+                #         for i in all_our_subjects:
+                #             i._is_stop = True
+                #
+                #     if right_att == 'isYou':
+                #         # А ЕСЛИ Я ПРОИГРАЮ, КОСНУВШИСЬ СТЕНЫ, ПРИ ЭТОМ БУДЕТ MEEPO IS YOU - ЧТО ТОГДА?
+                #         # for i in all_our_subjects:
+                #         # you_class = [i for i in self._actors if type(i)==subject][0]
+                #         # you_actor = self.get_actor(you_class.x, you_class.y)
+                #         # you_actor = self.get_actor(i.x, i.y)
+                #         you_actor = self.get_actor(all_our_subjects[0].x, all_our_subjects[0].y)
+                #         self.set_player(you_actor)
+                #
+                #     if right_att == "isVictory":
+                #         # какую из стен нужно каснуться, чтобы победить?
+                #         victory_subject = self.get_actor(all_our_subjects[0].x, all_our_subjects[0].y)
+                #         if self.player.x == victory_subject.x - 1 and self.player.y == victory_subject.y or \
+                #                 self.player.x == victory_subject.x + 1 and self.player.y == victory_subject.y or \
+                #                 self.player.x == victory_subject.x and self.player.y == victory_subject.y - 1 or \
+                #                 self.player.x == victory_subject.x and self.player.y == victory_subject.y + 1:
+                #             self.win()
+                #
+                #         # if self.player.x == victory_subject.x and self.player.y == victory_subject.y:
+                #         #     self.win()
+                #
+                #     if right_att == "isLose":
+                #         lose_subject = self.get_actor(all_our_subjects[0].x, all_our_subjects[0].y)
+                #         if self.player.x == lose_subject.x - 1 and self.player.y == lose_subject.y or \
+                #                 self.player.x == lose_subject.x + 1 and self.player.y == lose_subject.y or \
+                #                 self.player.x == lose_subject.x and self.player.y == lose_subject.y - 1 or \
+                #                 self.player.x == lose_subject.x and self.player.y == lose_subject.y + 1:
+                #             self.lose(self.player)
+
+
+            # if vert:
+            #     up_subj = vert.split()[0]
+            #     down_att = vert.split()[1]
+            #
+                actual_if_rules.append(horiz)
+
+            if vertical:
+                actual_if_rules.append(vertical)
+
+        victory_block_x, victory_block_y = 0, 0
+        # print(actual_if_rules, self._rules)
+        if len(self._rules) != len(actual_if_rules):
+            if len(self._rules) < len(actual_if_rules):
+                new_rules = [x for x in actual_if_rules + self._rules if x in actual_if_rules and x not in self._rules]
+                # добавляем их в общий список правил
+                self._rules.extend(new_rules)
+                # выполняем это свойство
+                for new_rule in new_rules:
+                    subject = self.get_character(new_rule.split()[0])
+                    attribute = new_rule.split()[1]
+                    self.change_property(subject, attribute, "was set")
+                    # if attribute == "isVictory":
+                    #     victory_block_x, victory_block_y = self.change_property(subject, attribute, "was set")
+                    # else:
+                    #     self.change_property(subject, attribute, "was set")
+
+            else:
+                # print("правил стало меньше")
+                # получаем удалённые правила
+                ex_rules = [x for x in actual_if_rules + self._rules if x in self._rules and x not in actual_if_rules]
+                self._rules = actual_if_rules
+                for deleted_rule in ex_rules:
+                    subject = self.get_character(deleted_rule.split()[0])
+                    attribute = deleted_rule.split()[1]
+                    self.change_property(subject, attribute)
+                    # if attribute == "isVictory":
+                    #     victory_block_x, victory_block_y = self.change_property(subject, attribute, "was set")
+                    # else:
+                    #     self.change_property(subject, attribute, "was deleted")
+
+        else:
+            difference_new = [x for x in self._rules + actual_if_rules if x in actual_if_rules and x not in self._rules]
+            difference_old = [x for x in self._rules + actual_if_rules if x not in actual_if_rules and x in self._rules]
+            if difference_new:
+                self._rules = actual_if_rules
+                # print(difference_new, difference_old)
+                # удаление старого
+                subject = self.get_character(difference_old[0].split()[0])
+                attribute = difference_old[0].split()[1]
+                self.change_property(subject, attribute)
+                # установка нового
+                subject = self.get_character(difference_new[0].split()[0])
+                attribute = difference_new[0].split()[1]
+                self.change_property(subject, attribute, "was set")
+
+    def change_property(self, subject: Optional[type], attribute: str, comment: str ="was deleted") -> Tuple[str, str]:
+        """
+        Takes a rule-string, split it and change the attribute of the given subject
+        """
+        print(subject, attribute, comment)
+
+        all_our_subjects = [i for i in self._actors if type(i) == subject]
+
+        if len(all_our_subjects) == 1:
+            only_one_subject = all_our_subjects[0]
+
+            if comment != "was deleted":
+                if attribute == 'isPush':
+                    only_one_subject._is_push = True
+
+                if attribute == 'isStop':
+                    only_one_subject._is_stop = True
+
+                if attribute == 'isVictory':
+                    only_one_subject.set_win()
+                    # only_one_subject._is_stop = False
+                    # print(only_one_subject)
+                    # print(type(only_one_subject))
+                    # print(dir(only_one_subject))
+
+                if attribute == 'isYou':
+                    self.player = only_one_subject
+
+                if attribute == 'isLose':
+                    # print(only_one_subject)
+                    # only_one_subject.set_lose()
+                    only_one_subject._is_stop = False
+                    only_one_subject._is_lose = True
+
+            else:
+                if attribute == 'isPush':
+                    only_one_subject._is_push = False
+
+                if attribute == 'isStop':
+                    only_one_subject._is_stop = False
+
+                if attribute == 'isVictory':
+                    only_one_subject._is_win = False
+
+                if attribute == 'isYou':
+                    self.player = None
+
+        else:
+            for sub in all_our_subjects:
+                if comment != "was deleted":
+                    if attribute == 'isPush':
+                        sub._is_push = True
+
+                    if attribute == 'isStop':
+                        sub._is_stop = True
+
+                    if attribute == 'isVictory':
+                        sub.set_win()
+                        # only_one_subject._is_stop = False
+                        # print(only_one_subject)
+                        # print(type(only_one_subject))
+                        # print(dir(only_one_subject))
+
+                    if attribute == 'isYou':
+                        self.player = sub
+
+                    if attribute == 'isLose':
+                        # print(only_one_subject)
+                        # only_one_subject.set_lose()
+                        sub._is_stop = False
+                        sub._is_lose = True
+
+                else:
+                    if attribute == 'isPush':
+                        pass
+                    sub._is_push = False
+
+                    if attribute == 'isStop':
+                        sub._is_stop = False
+
+                    if attribute == 'isVictory':
+                        sub._is_win = False
+
+                    if attribute == 'isYou':
+                        self.player = None
 
     @staticmethod
     def get_character(subject: str) -> Optional[Type[Any]]:
@@ -252,8 +454,12 @@ class Game:
         # self._history stack
         # Find the code that pushed onto the stack to understand better what
         # is in the stack.
-        pass
-        return
+        # print(self._history._items)
+
+        previous_step = self._history.pop()
+        # self._history.push(previous_step)
+        self._actors = previous_step.get_actors()
+
 
     def _copy(self) -> 'Game':
         """
@@ -263,7 +469,7 @@ class Game:
         game_copy = Game()
         # TODO Task 4: Complete this method to create a proper copy of the
         #  current state of the game
-        pass
+        # pass
         return game_copy
 
     def get_actor(self, x: int, y: int) -> Optional[actor.Actor]:
@@ -293,10 +499,12 @@ class Game:
 if __name__ == "__main__":
 
     game = Game()
+
     # load_map public function
     game.load_map(MAP_PATH)
     game.new()
     game.run()
+
 
     # import python_ta
     # python_ta.check_all(config={
